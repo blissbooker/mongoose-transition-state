@@ -1,0 +1,23 @@
+{
+  "name": "mongoose-transition-state",
+  "version": "0.1.0",
+  "description": "mongoose-transition-state",
+  "private": true,
+  "main": "index.js",
+  "author": "Filipe Pinheiro <filipe@alpha-iv.com>",
+  "scripts": {
+    "test": "./node_modules/.bin/lab test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@source.enterat.de:reservation-engine/mongoose-transition-state.git"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "database-cleaner": "^0.7.0",
+    "factory-girl": "^1.0.2",
+    "lab": "^4.2.0",
+    "mongoose": "^3.8.15"
+  },
+  "license": "ISC"
+}
