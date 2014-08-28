@@ -44,7 +44,7 @@ lab.experiment('plugin', function () {
   lab.experiment('with transitions array', function () {
     lab.before(function (done) {
       var schema = new Mongoose.Schema({ name: String });
-      schema.plugin(Lib, { transitions: [{ 'default': 'b' }]});
+      schema.plugin(Lib, { transitions: [{ 'created': 'b' }]});
 
       this.model = Mongoose.model('Model', schema);
       this.factory = Factory.create(this.model);
