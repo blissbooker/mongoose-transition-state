@@ -1,7 +1,7 @@
 var Factory = require('factory-girl');
-exports.create = function (model) {
+exports.create = function (name, model) {
   var c = 1;
-  Factory.define('model', model, {
+  Factory.define(name, model, {
     name: function () {
       return 'johndoe ' + c++;
     }

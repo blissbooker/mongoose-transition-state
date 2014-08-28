@@ -7,6 +7,52 @@ var Db = require('./database');
 var Mongoose = Db.Mongoose;
 
 var lab = exports.lab = Lab.script();
+
+var internals = {};
+internals.count = 1;
+internals.wrapTest = function (options) {
+  lab.before(function (done) {
+    var schema = new Mongoose.Schema({ name: String });
+    schema.plugin(Lib, options);
+
+    this.name = 'model_' + internals.count++;
+    this.model = Mongoose.model(this.name, schema);
+    this.factory = Factory.create(this.name, this.model);
+    return done();
+  });
+  lab.test('transitions to valid state', function (done) {
+    this.factory.create(this.name, function (err, model) {
+      this.model.findOne(model._id, function (err, model) {
+        model.state = 'b';
+        model.save(function (err) {
+          Lab.expect(err).to.not.exist;
+          return done();
+        });
+      });
+    });
+  });
+  lab.test('fails to set not valid transition', function (done) {
+    this.factory.create(this.name, function (err, model) {
+      this.model.findOne(model._id, function (err, model) {
+        model.state = 'c';
+        model.save(function (err) {
+          Lab.expect(err).to.exist;
+          return done();
+        });
+      });
+    });
+  });
+  lab.afterEach(function (done) {
+    Db.clean(done);
+  });
+  lab.after(function (done) {
+    delete this.factory;
+    delete this.model;
+    delete this.name;
+    return done();
+  });
+};
+
 lab.experiment('plugin', function () {
   lab.before(function (done) {
     Db.connect(done);
@@ -41,45 +87,32 @@ lab.experiment('plugin', function () {
       return done();
     });
   });
+  lab.experiment('with transitions object', function () {
+    internals.wrapTest({ transitions: { 'created': 'b' }});
+  });
   lab.experiment('with transitions array', function () {
-    lab.before(function (done) {
-      var schema = new Mongoose.Schema({ name: String });
-      schema.plugin(Lib, { transitions: [{ 'created': 'b' }]});
+    internals.wrapTest({ transitions: [{ 'created': 'b' }]});
+  });
+  lab.experiment('with transitions function', function () {
+    internals.wrapTest({
+      transitions: function (original, current, callback) {
+        if (current === 'error') {
+          return callback(new Error('error'));
+        }
 
-      this.model = Mongoose.model('Model', schema);
-      this.factory = Factory.create(this.model);
-
-      return done();
+        return callback(null, original === 'created' && current === 'b');
+      }
     });
-    lab.test('transitions to valid state', function (done) {
-      this.factory.create('model', function (err, model) {
+    lab.test('propagates error', function (done) {
+      this.factory.create(this.name, function (err, model) {
         this.model.findOne(model._id, function (err, model) {
-          model.state = 'b';
+          model.state = 'error';
           model.save(function (err) {
-            Lab.expect(err).to.not.exist;
+            Lab.expect(err).exist;
             return done();
           });
         });
       });
-    });
-    lab.test('fails to set not valid transition', function (done) {
-      this.factory.create('model', function (err, model) {
-        this.model.findOne(model._id, function (err, model) {
-          model.state = 'c';
-          model.save(function (err) {
-            Lab.expect(err).to.exist;
-            return done();
-          });
-        });
-      });
-    });
-    lab.afterEach(function (done) {
-      Db.clean(done);
-    });
-    lab.after(function (done) {
-      delete this.factory;
-      delete this.model;
-      return done();
     });
   });
 });
