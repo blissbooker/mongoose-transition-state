@@ -12,6 +12,7 @@ var internals = {};
 internals.count = 1;
 internals.wrapTest = function (options) {
   lab.before(function (done) {
+    options.defaultState = 'a';
     var schema = new Mongoose.Schema({ name: String });
     schema.plugin(Lib, options);
 
@@ -21,8 +22,9 @@ internals.wrapTest = function (options) {
     return done();
   });
   lab.test('transitions to valid state', function (done) {
+    var self = this;
     this.factory.create(this.name, function (err, model) {
-      this.model.findOne(model._id, function (err, model) {
+      self.model.findOne(model._id, function (err, model) {
         model.state = 'b';
         model.save(function (err) {
           Lab.expect(err).to.not.exist;
@@ -32,11 +34,25 @@ internals.wrapTest = function (options) {
     });
   });
   lab.test('fails to set not valid transition', function (done) {
+    var self = this;
     this.factory.create(this.name, function (err, model) {
-      this.model.findOne(model._id, function (err, model) {
+      self.model.findOne(model._id, function (err, model) {
         model.state = 'c';
         model.save(function (err) {
           Lab.expect(err).to.exist;
+          return done();
+        });
+      });
+    });
+  });
+  lab.test('transitions to same state', function (done) {
+    var self = this;
+    this.factory.create(this.name, function (err, model) {
+      var state = model.state;
+      self.model.findOne(model._id, function (err, model) {
+        model.state = state;
+        model.save(function (err) {
+          Lab.expect(err).to.not.exist;
           return done();
         });
       });
@@ -87,11 +103,68 @@ lab.experiment('plugin', function () {
       return done();
     });
   });
+  lab.experiment('no confict', function () {
+    lab.before(function (done) {
+      var schema = new Mongoose.Schema({ name: String });
+      schema.plugin(function (schema) {
+        schema.pre('init', function (next) {
+          this.__original = {
+            other: true
+          };
+          return next();
+        });
+      });
+      schema.plugin(Lib, { transitions: [{ 'created': 'b' }]});
+
+      this.name = 'model_' + internals.count++;
+      this.model = Mongoose.model(this.name, schema);
+      this.factory = Factory.create(this.name, this.model);
+      return done();
+    });
+    lab.test('with __original plugins', function (done) {
+      var self = this;
+      this.factory.create(this.name, function (err, model) {
+        self.model.findOne(model._id, function (err, model) {
+          Lab.expect(model.__original.other).to.equal(true);
+          return done();
+        });
+      });
+    });
+  });
+  lab.experiment('falls back to default state', function () {
+    lab.before(function (done) {
+      var schema = new Mongoose.Schema({ name: String });
+      schema.plugin(Lib, { transitions: [{ 'created': 'b' }]});
+
+      this.name = 'model_' + internals.count++;
+      this.model = Mongoose.model(this.name, schema);
+      this.factory = Factory.create(this.name, this.model);
+      return done();
+    });
+    lab.test('on fetch', function (done) {
+      var self = this;
+      this.factory.create(this.name, function (err, model) {
+        var attributes = { name: 'name', state: '' };
+        self.model.findOneAndUpdate(model._id, attributes, function () {
+          self.model.findOne(model._id, function (err, model) {
+            Lab.expect(model.state).to.equal('created');
+            return done();
+          });
+        });
+      });
+    });
+    lab.test('on creation', function (done) {
+      this.factory.create(this.name, function (err, model) {
+        Lab.expect(model.state).to.equal('created');
+        return done();
+      });
+    });
+  });
   lab.experiment('with transitions object', function () {
-    internals.wrapTest({ transitions: { 'created': 'b' }});
+    internals.wrapTest({ transitions: { 'a': 'b' }});
   });
   lab.experiment('with transitions array', function () {
-    internals.wrapTest({ transitions: [{ 'created': 'b' }]});
+    internals.wrapTest({ transitions: [{ 'a': 'b' }]});
   });
   lab.experiment('with transitions function', function () {
     internals.wrapTest({
@@ -100,7 +173,7 @@ lab.experiment('plugin', function () {
           return callback(new Error('error'));
         }
 
-        return callback(null, original === 'created' && current === 'b');
+        return callback(null, original === 'a' && current === 'b');
       }
     });
     lab.test('propagates error', function (done) {

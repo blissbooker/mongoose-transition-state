@@ -6,7 +6,7 @@
   "main": "index.js",
   "author": "Filipe Pinheiro <filipe@alpha-iv.com>",
   "scripts": {
-    "test": "./node_modules/.bin/lab -c test",
+    "test": "./node_modules/.bin/lab -c -v test",
     "lint": "./node_modules/.bin/jshint ."
   },
   "repository": {
