@@ -37,7 +37,7 @@ internals.wrapTest = function (options) {
     var self = this;
     this.factory.create(this.name, function (err, model) {
       self.model.findOne(model._id, function (err, model) {
-        model.state = 'c';
+        model.state = 'z';
         model.save(function (err) {
           Lab.expect(err).to.exist;
           return done();
@@ -114,12 +114,21 @@ lab.experiment('plugin', function () {
           return next();
         });
       });
-      schema.plugin(Lib, { transitions: [{ 'created': 'b' }]});
+      schema.plugin(Lib, { transitions: { 'default': 'b' }});
 
       this.name = 'model_' + internals.count++;
       this.model = Mongoose.model(this.name, schema);
       this.factory = Factory.create(this.name, this.model);
       return done();
+    });
+    lab.test('with defined state', function (done) {
+      var self = this;
+      this.factory.create(this.name, { state: 'myown'}, function (err, model) {
+        self.model.findOne(model._id, function (err, model) {
+          Lab.expect(model.state).to.equal('myown');
+          return done();
+        });
+      });
     });
     lab.test('with __original plugins', function (done) {
       var self = this;
@@ -134,7 +143,7 @@ lab.experiment('plugin', function () {
   lab.experiment('falls back to default state', function () {
     lab.before(function (done) {
       var schema = new Mongoose.Schema({ name: String });
-      schema.plugin(Lib, { transitions: [{ 'created': 'b' }]});
+      schema.plugin(Lib, { transitions: { 'default': 'b' }});
 
       this.name = 'model_' + internals.count++;
       this.model = Mongoose.model(this.name, schema);
@@ -147,7 +156,7 @@ lab.experiment('plugin', function () {
         var attributes = { name: 'name', state: '' };
         self.model.findOneAndUpdate(model._id, attributes, function () {
           self.model.findOne(model._id, function (err, model) {
-            Lab.expect(model.state).to.equal('created');
+            Lab.expect(model.state).to.equal('default');
             return done();
           });
         });
@@ -155,7 +164,7 @@ lab.experiment('plugin', function () {
     });
     lab.test('on creation', function (done) {
       this.factory.create(this.name, function (err, model) {
-        Lab.expect(model.state).to.equal('created');
+        Lab.expect(model.state).to.equal('default');
         return done();
       });
     });
@@ -164,7 +173,7 @@ lab.experiment('plugin', function () {
     internals.wrapTest({ transitions: { 'a': 'b' }});
   });
   lab.experiment('with transitions array', function () {
-    internals.wrapTest({ transitions: [{ 'a': 'b' }]});
+    internals.wrapTest({ transitions: { 'a': ['b', 'c'] }});
   });
   lab.experiment('with transitions function', function () {
     internals.wrapTest({
