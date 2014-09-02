@@ -113,6 +113,12 @@ lab.experiment('plugin', function () {
           };
           return next();
         });
+        schema.pre('save', function (next) {
+          this.__original = {
+            other: true
+          };
+          return next();
+        });
       });
       schema.plugin(Lib, { transitions: { 'default': 'b' }});
 
@@ -130,12 +136,21 @@ lab.experiment('plugin', function () {
         });
       });
     });
-    lab.test('with __original plugins', function (done) {
-      var self = this;
-      this.factory.create(this.name, function (err, model) {
-        self.model.findOne(model._id, function (err, model) {
+    lab.experiment('with __original plugins', function () {
+      lab.test('pre init hook', function (done) {
+        this.factory.create(this.name, function (err, model) {
           Lab.expect(model.__original.other).to.equal(true);
           return done();
+        });
+      });
+
+      lab.test('pre save hook', function (done) {
+        var self = this;
+        this.factory.create(this.name, function (err, model) {
+          self.model.findOne(model._id, function (err, model) {
+            Lab.expect(model.__original.other).to.equal(true);
+            return done();
+          });
         });
       });
     });
