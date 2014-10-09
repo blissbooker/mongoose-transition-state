@@ -1,13 +1,25 @@
 var Mongoose = require('mongoose');
-var Cleaner = require('database-cleaner');
-var cleaner = new Cleaner('mongodb');
 
 exports.Mongoose = Mongoose;
 exports.clean = function (done) {
-    if (Mongoose.connections && Mongoose.connections[0]) {
-        return cleaner.clean(Mongoose.connections[0].db, done);
-    }
-    return done();
+    var name;
+    var models = Mongoose.modelNames() || [];
+
+    (function _clean(index) {
+        name = models[index];
+
+        if (index >= models.length - 1) {
+            return done();
+        }
+
+        Mongoose.model(name).remove({ }, function (err) {
+            if (err) {
+                return done(err);
+            }
+
+            return _clean(index + 1);
+        });
+    }(0));
 };
 
 exports.connect = function (done) {
