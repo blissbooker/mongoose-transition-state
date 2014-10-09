@@ -5,20 +5,16 @@ exports.clean = function (done) {
     var name;
     var models = Mongoose.modelNames() || [];
 
-    if (models.length === 0) {
-        return done();
-    }
-
     (function _clean(index) {
         name = models[index];
+
+        if (index >= models.length - 1) {
+            return done();
+        }
 
         Mongoose.model(name).remove({ }, function (err) {
             if (err) {
                 return done(err);
-            }
-
-            if (index === models.length - 1) {
-                return done();
             }
 
             return _clean(index + 1);
