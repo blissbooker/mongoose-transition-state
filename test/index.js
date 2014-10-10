@@ -10,6 +10,7 @@ var lab = exports.lab = Lab.script();
 
 var internals = {};
 internals.count = 1;
+
 internals.test = function (options) {
 
   lab.before(function (done) {

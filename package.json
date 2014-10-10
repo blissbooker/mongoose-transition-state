@@ -24,11 +24,5 @@
     "mongoose": "^3.8.15",
     "precommit-hook": "^1.0.7"
   },
-  "license": "ISC",
-  "readme": "# mongoose-transition-state\n\n* `defaultState` If a string is provided the value is used to set the initial\nstate, otherwise the default state is `created`.\n* `transitions`\n",
-  "readmeFilename": "README.md",
-  "_id": "mongoose-transition-state@0.1.0",
-  "_shasum": "acb81da9ca440106cac7367ee385707e0648a1e9",
-  "_resolved": "git+ssh://git@source.enterat.de:reservation-engine/mongoose-transition-state.git#2b1ba5d96ab54d3d860870afba76a0ae8d136d19",
-  "_from": "mongoose-transition-state@git+ssh://git@source.enterat.de:reservation-engine/mongoose-transition-state.git"
+  "license": "ISC"
 }
