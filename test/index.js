@@ -302,19 +302,25 @@ lab.experiment('plugin', function () {
       this.model.collection.insert({ name: 'a' }, done);
     });
 
-    lab.test('uses default test', function (done) {
-      this.model.findOne(model._id, function (err, model) {
+    lab.test('uses default state', function (done) {
+      this.model.findOne(this.model._id, function (err, model) {
 
           Lab.expect(err).to.not.exist;
           Lab.expect(model.state, 'default');
-          return done();
+
+          model.state = 'a';
+          model.save(function (err) {
+
+            Lab.expect(err).to.not.exist;
+            return done();
+          });
         });
     });
 
     lab.afterEach(function (done) {
 
-      delete model;
-      delete name;
+      delete this.model;
+      delete this.name;
       return done();
     });
   });
