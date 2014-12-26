@@ -324,4 +324,44 @@ lab.experiment('plugin', function () {
       return done();
     });
   });
+
+  lab.experiment('with public and private properties', function () {
+    lab.test('keeps the default private properties', function (done) {
+
+      var schema = new Mongoose.Schema({ name: String });
+      schema.plugin(Lib, { transitions: { 'default': 'b' }, isPrivate: true });
+
+      var name = 'model_' + internals.count++;
+      var model = Mongoose.model(name, schema);
+      var factory = Factory.create(name, model);
+
+      factory.create(name, function (err, model) {
+        var obj = model.toJSON();
+
+        Lab.expect(obj._state).to.exist;
+        Lab.expect(obj.state).to.not.exist;
+
+        return done();
+      });
+    });
+
+    lab.test('creates public properties from private counterparts', function (done) {
+
+      var schema = new Mongoose.Schema({ name: String });
+      schema.plugin(Lib, { transitions: { 'default': 'b' }, isPrivate: false });
+
+      var name = 'model_' + internals.count++;
+      var model = Mongoose.model(name, schema);
+      var factory = Factory.create(name, model);
+
+      factory.create(name, function (err, model) {
+        var obj = model.toJSON();
+
+        Lab.expect(obj._state).to.not.exist;
+        Lab.expect(obj.state).to.exist;
+
+        return done();
+      });
+    });
+  });
 });
