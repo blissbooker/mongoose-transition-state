@@ -1,7 +1,9 @@
 var Mongoose = require('mongoose');
 
 exports.Mongoose = Mongoose;
+
 exports.clean = function (done) {
+
     var name;
     var models = Mongoose.modelNames() || [];
 
@@ -23,6 +25,7 @@ exports.clean = function (done) {
 };
 
 exports.connect = function (done) {
+
     var url = 'mongodb://localhost/mongoose-transition-state';
     Mongoose.connect(url, function (err) {
         if (err && !(/trying to open unclosed connection/i).test(err.message)) {
